@@ -1,0 +1,162 @@
+﻿using System.Data;
+using System.Data.SqlClient;
+
+namespace AccesBDD
+{
+    public partial class miseAJourProd : Form
+    {
+        Ado ado = new Ado();
+
+        public miseAJourProd()
+        {
+            InitializeComponent();
+        }
+
+        public void RemplirGrid()
+        {
+            try
+            {
+                if (ado.Dataset.Tables["Produit"] != null)
+                {
+                    ado.Dataset.Tables["Produit"].Clear();
+                }
+                ado.DataAdapter = new SqlDataAdapter("select * from Produit", ado.Connection);
+                ado.DataAdapter.Fill(ado.Dataset, "Produit");
+                dataGridView1.DataSource = ado.Dataset.Tables["Produit"];
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erreur lors du chargement des produits : " + ex.Message);
+            }
+        }
+
+        public void RemplirCombo()
+        {
+            try
+            {
+                comboBox1.Items.Clear();
+                ado.DataAdapter = new SqlDataAdapter("select * from Categorie", ado.Connection);
+                ado.DataAdapter.Fill(ado.Dataset, "Categorie");
+                comboBox1.DataSource = ado.Dataset.Tables["Categorie"];
+                comboBox1.DisplayMember = "nom";
+                comboBox1.ValueMember = "idCategorie";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erreur lors du chargement des catégories : " + ex.Message);
+            }
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            // Vérification des champs
+            if (string.IsNullOrWhiteSpace(textBox1.Text) ||
+                string.IsNullOrWhiteSpace(textBox2.Text) ||
+                string.IsNullOrWhiteSpace(textBox3.Text))
+            {
+                MessageBox.Show("Veuillez remplir tous les champs");
+                return;
+            }
+
+            // Vérifier si la catégorie est sélectionnée
+            if (comboBox1.SelectedValue == null)
+            {
+                MessageBox.Show("Veuillez sélectionner une catégorie");
+                return;
+            }
+
+            // Vérifier si le produit existe déjà
+            foreach (DataRow row in ado.Dataset.Tables["Produit"].Rows)
+            {
+                if (textBox1.Text == row[0].ToString())
+                {
+                    MessageBox.Show("Ce produit existe déjà");
+                    return;
+                }
+            }
+
+            try
+            {
+                // Ajouter le nouveau produit
+                ado.Ligne = ado.Dataset.Tables["Produit"].NewRow();
+                ado.Ligne[0] = textBox1.Text;
+                ado.Ligne[1] = textBox2.Text;
+                ado.Ligne[2] = int.Parse(textBox3.Text);
+                ado.Ligne[3] = comboBox1.SelectedValue;
+
+                ado.Dataset.Tables["Produit"].Rows.Add(ado.Ligne);
+
+                // Mettre à jour l'affichage
+                dataGridView1.DataSource = ado.Dataset.Tables["Produit"];
+
+                MessageBox.Show("Produit ajouté avec succès !");
+
+                // Vider les champs
+                LimperChamps();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erreur lors de l'ajout du produit : " + ex.Message);
+            }
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            // Afficher la table des produits
+            RemplirGrid();
+            MessageBox.Show("Tableau des produits affiché !");
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            // Enregistrer les modifications en base de données
+            try
+            {
+                if (ado.DataAdapter == null)
+                {
+                    MessageBox.Show("Veuillez d'abord charger les données");
+                    return;
+                }
+
+                ado.CommandeBuilder = new SqlCommandBuilder(ado.DataAdapter);
+                int rowsAffected = ado.DataAdapter.Update(ado.Dataset, "Produit");
+
+                MessageBox.Show($"{rowsAffected} ligne(s) enregistrée(s) avec succès !");
+                RemplirGrid();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erreur lors de l'enregistrement : " + ex.Message);
+            }
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            // Fermer l'application
+            this.Close();
+        }
+
+        private void LimperChamps()
+        {
+            textBox1.Clear();
+            textBox2.Clear();
+            textBox3.Clear();
+            comboBox1.SelectedIndex = -1;
+        }
+
+       public void remplirGrid()
+        {
+            if (ado.dataset.Tables["Produit"] != null)
+            {
+                ado.dataset.Tables["Produit"].Clear();
+            }
+            ado.dataAdapter = new SqlDataAdapter("select * from Produit", ado.connection);
+            ado.dataAdapter.Fill(ado.dataset, "Produit");
+            dataGridView1.DataSource = ado.dataset.Tables["Produit"];
+        }
+    }
+}
